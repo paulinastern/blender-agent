@@ -451,6 +451,79 @@ def create_eye_material_basic():
     return assign_material_to_object(obj, mat)
 
 
+def create_water_material():
+    obj = get_active_object()
+    if obj is None:
+        return False
+
+    mat = get_unique_material_for_object(obj, "BlendAgent_Water")
+    set_material_display_color(mat, (0.16, 0.45, 0.90, 0.65))
+
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    output = nodes.new(type="ShaderNodeOutputMaterial")
+    principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+    noise = nodes.new(type="ShaderNodeTexNoise")
+    bump = nodes.new(type="ShaderNodeBump")
+    mapping = nodes.new(type="ShaderNodeMapping")
+    texcoord = nodes.new(type="ShaderNodeTexCoord")
+
+    texcoord.location = (-900, -120)
+    mapping.location = (-680, -120)
+    noise.location = (-450, -120)
+    bump.location = (-180, -120)
+    principled.location = (80, 0)
+    output.location = (340, 0)
+
+    if "Base Color" in principled.inputs:
+        principled.inputs["Base Color"].default_value = (0.10, 0.38, 0.85, 1.0)
+    if "Roughness" in principled.inputs:
+        principled.inputs["Roughness"].default_value = 0.03
+    if "IOR" in principled.inputs:
+        principled.inputs["IOR"].default_value = 1.333
+    if "Transmission Weight" in principled.inputs:
+        principled.inputs["Transmission Weight"].default_value = 1.0
+    elif "Transmission" in principled.inputs:
+        principled.inputs["Transmission"].default_value = 1.0
+    if "Specular IOR Level" in principled.inputs:
+        principled.inputs["Specular IOR Level"].default_value = 1.0
+    elif "Specular" in principled.inputs:
+        principled.inputs["Specular"].default_value = 0.9
+
+    if "Scale" in noise.inputs:
+        noise.inputs["Scale"].default_value = 8.0
+    if "Detail" in noise.inputs:
+        noise.inputs["Detail"].default_value = 10.0
+    if "Roughness" in noise.inputs:
+        noise.inputs["Roughness"].default_value = 0.55
+
+    if "Strength" in bump.inputs:
+        bump.inputs["Strength"].default_value = 0.08
+    if "Distance" in bump.inputs:
+        bump.inputs["Distance"].default_value = 0.02
+
+    try:
+        links.new(texcoord.outputs["Object"], mapping.inputs["Vector"])
+        links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
+        links.new(noise.outputs["Fac"], bump.inputs["Height"])
+        if "Normal" in principled.inputs:
+            links.new(bump.outputs["Normal"], principled.inputs["Normal"])
+        links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+    except Exception as e:
+        print("Water material link error:", e)
+        return False
+
+    # Blend mode for nicer preview/render behavior
+    try:
+        mat.blend_method = 'BLEND'
+    except Exception:
+        pass
+
+    return assign_material_to_object(obj, mat)
+
+
 # ------------------------
 # OPERATOR
 # ------------------------
@@ -469,7 +542,10 @@ class BLENDAGENT_OT_generate(bpy.types.Operator):
 
         executed = False
 
-        if "eye" in op:
+        if "water" in op:
+            executed = create_water_material()
+
+        elif "eye" in op:
             executed = create_eye_material_basic()
 
         elif "hair" in op:
@@ -486,6 +562,10 @@ class BLENDAGENT_OT_generate(bpy.types.Operator):
 
         elif "subdivide" in op:
             executed = create_subdivide_nodes()
+
+        elif "water" in prompt or "ocean" in prompt or "sea" in prompt or "lake" in prompt:
+            print("Fallback water material triggered")
+            executed = create_water_material()
 
         elif "eye" in prompt or "iris" in prompt or "cornea" in prompt:
             print("Fallback eye material triggered")
@@ -553,6 +633,7 @@ class BLENDAGENT_PT_panel(bpy.types.Panel):
 
         help_box = layout.box()
         help_box.label(text="Examples")
+        help_box.label(text="• make this water")
         help_box.label(text="• make this glossy")
         help_box.label(text="• make this toon")
         help_box.label(text="• make this hair shiny")
@@ -569,7 +650,7 @@ def register_properties():
     bpy.types.Scene.blendagent_prompt = bpy.props.StringProperty(
         name="Prompt",
         description="Describe what to generate",
-        default="make this hair shiny"
+        default="make this water"
     )
 
 
