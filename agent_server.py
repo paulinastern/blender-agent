@@ -26,6 +26,7 @@ Allowed operations:
 - toon_material
 - hair_material_basic
 - eye_material_basic
+- water_material
 
 Rules:
 - Return ONLY JSON.
@@ -49,16 +50,20 @@ make this toon
 make this hair shiny
 {"operation":"hair_material_basic"}
 
-hair material
-{"operation":"hair_material_basic"}
-
 make this eye shiny
 {"operation":"eye_material_basic"}
 
-eye material
-{"operation":"eye_material_basic"}
+make this water
+{"operation":"water_material"}
+
+add ocean material
+{"operation":"water_material"}
 """
 
+
+# ------------------------
+# HELPERS
+# ------------------------
 
 def extract_json(text):
     match = re.search(r"\{.*\}", text, re.DOTALL)
@@ -70,16 +75,21 @@ def extract_json(text):
 def fallback_plan(user_prompt: str):
     p = user_prompt.lower()
 
-    # more specific first
+    # VERY IMPORTANT: order matters (specific → general)
+
+    if any(word in p for word in ["water", "ocean", "liquid", "sea", "lake"]):
+        return {"operation": "water_material", "source": "fallback"}
+
     if any(word in p for word in ["eye", "eyes", "iris", "pupil", "cornea"]):
         return {"operation": "eye_material_basic", "source": "fallback"}
 
-    if any(word in p for word in ["hair", "bangs", "strands", "hair shader", "hair material", "hair highlight"]):
+    if any(word in p for word in ["hair", "bangs", "strands", "hair shader", "hair material"]):
         return {"operation": "hair_material_basic", "source": "fallback"}
 
     if any(word in p for word in ["toon", "anime", "stylized", "cartoon", "cel"]):
         return {"operation": "toon_material", "source": "fallback"}
 
+    # glossy AFTER water so it doesn't hijack
     if any(word in p for word in ["glossy", "shiny", "reflective", "polished"]):
         return {"operation": "glossy_material", "source": "fallback"}
 
@@ -91,6 +101,10 @@ def fallback_plan(user_prompt: str):
 
     return {"operation": "unknown", "source": "fallback"}
 
+
+# ------------------------
+# LLM CALL
+# ------------------------
 
 def call_llm(user_prompt):
     prompt = f"""
@@ -135,6 +149,10 @@ JSON:
         print("LLM error:", e)
         return fallback_plan(user_prompt)
 
+
+# ------------------------
+# ROUTE
+# ------------------------
 
 @app.post("/plan")
 def plan_nodes(data: Prompt):
