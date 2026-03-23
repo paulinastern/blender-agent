@@ -25,6 +25,7 @@ Allowed operations:
 - glossy_material
 - toon_material
 - hair_material_basic
+- eye_material_basic
 
 Rules:
 - Return ONLY JSON.
@@ -36,25 +37,13 @@ Examples:
 subdivide mesh
 {"operation":"subdivide_mesh"}
 
-smooth mesh
-{"operation":"subdivide_mesh"}
-
 add terrain noise
-{"operation":"noise_terrain"}
-
-make this hilly
 {"operation":"noise_terrain"}
 
 make this glossy
 {"operation":"glossy_material"}
 
-add shiny material
-{"operation":"glossy_material"}
-
 make this toon
-{"operation":"toon_material"}
-
-anime shader
 {"operation":"toon_material"}
 
 make this hair shiny
@@ -62,6 +51,12 @@ make this hair shiny
 
 hair material
 {"operation":"hair_material_basic"}
+
+make this eye shiny
+{"operation":"eye_material_basic"}
+
+eye material
+{"operation":"eye_material_basic"}
 """
 
 
@@ -75,7 +70,11 @@ def extract_json(text):
 def fallback_plan(user_prompt: str):
     p = user_prompt.lower()
 
-    if any(word in p for word in ["hair", "hair shader", "hair material", "hair highlight"]):
+    # more specific first
+    if any(word in p for word in ["eye", "eyes", "iris", "pupil", "cornea"]):
+        return {"operation": "eye_material_basic", "source": "fallback"}
+
+    if any(word in p for word in ["hair", "bangs", "strands", "hair shader", "hair material", "hair highlight"]):
         return {"operation": "hair_material_basic", "source": "fallback"}
 
     if any(word in p for word in ["toon", "anime", "stylized", "cartoon", "cel"]):

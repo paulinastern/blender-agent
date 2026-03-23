@@ -89,16 +89,19 @@ def create_geo_node_group(name):
     return node_group, nodes, links, input_node, output_node
 
 
-def get_or_create_material(name="BlendAgentMaterial"):
-    mat = bpy.data.materials.get(name)
+def get_unique_material_for_object(obj, base_name):
+    safe_obj_name = obj.name.replace(" ", "_")
+    mat_name = f"{base_name}_{safe_obj_name}"
+
+    mat = bpy.data.materials.get(mat_name)
     if mat is None:
-        mat = bpy.data.materials.new(name=name)
+        mat = bpy.data.materials.new(name=mat_name)
+
     mat.use_nodes = True
     return mat
 
 
-def assign_material_to_active_object(mat):
-    obj = get_active_object()
+def assign_material_to_object(obj, mat):
     if obj is None:
         return False
 
@@ -111,6 +114,13 @@ def assign_material_to_active_object(mat):
         obj.data.materials.append(mat)
 
     return True
+
+
+def set_material_display_color(mat, rgba):
+    try:
+        mat.diffuse_color = rgba
+    except Exception as e:
+        print("Diffuse color set error:", e)
 
 
 # ------------------------
@@ -203,7 +213,8 @@ def create_glossy_material():
     if obj is None:
         return False
 
-    mat = get_or_create_material("BlendAgent_Glossy")
+    mat = get_unique_material_for_object(obj, "BlendAgent_Glossy")
+    set_material_display_color(mat, (0.72, 0.84, 1.0, 1.0))
 
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
@@ -224,9 +235,9 @@ def create_glossy_material():
     output.location = (340, 0)
 
     if "Base Color" in principled.inputs:
-        principled.inputs["Base Color"].default_value = (0.78, 0.80, 0.86, 1.0)
+        principled.inputs["Base Color"].default_value = (0.72, 0.84, 1.0, 1.0)
     if "Roughness" in principled.inputs:
-        principled.inputs["Roughness"].default_value = 0.04
+        principled.inputs["Roughness"].default_value = 0.03
     if "Metallic" in principled.inputs:
         principled.inputs["Metallic"].default_value = 0.0
     if "Specular IOR Level" in principled.inputs:
@@ -257,7 +268,7 @@ def create_glossy_material():
         print("Glossy material link error:", e)
         return False
 
-    return assign_material_to_active_object(mat)
+    return assign_material_to_object(obj, mat)
 
 
 def create_toon_material():
@@ -265,7 +276,8 @@ def create_toon_material():
     if obj is None:
         return False
 
-    mat = get_or_create_material("BlendAgent_Toon")
+    mat = get_unique_material_for_object(obj, "BlendAgent_Toon")
+    set_material_display_color(mat, (1.0, 0.25, 0.95, 1.0))
 
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
@@ -276,41 +288,36 @@ def create_toon_material():
     shader_to_rgb = nodes.new(type="ShaderNodeShaderToRGB")
     ramp = nodes.new(type="ShaderNodeValToRGB")
     emission = nodes.new(type="ShaderNodeEmission")
-    mix = nodes.new(type="ShaderNodeMixShader")
 
     diffuse.location = (-500, 0)
     shader_to_rgb.location = (-280, 0)
     ramp.location = (-60, 0)
-    emission.location = (180, 120)
-    mix.location = (380, 0)
-    output.location = (620, 0)
+    emission.location = (180, 0)
+    output.location = (420, 0)
 
     try:
         ramp.color_ramp.elements[0].position = 0.35
-        ramp.color_ramp.elements[0].color = (0.08, 0.08, 0.10, 1.0)
-        ramp.color_ramp.elements[1].position = 0.65
-        ramp.color_ramp.elements[1].color = (0.85, 0.55, 0.95, 1.0)
+        ramp.color_ramp.elements[0].color = (0.06, 0.06, 0.08, 1.0)
+        ramp.color_ramp.elements[1].position = 0.62
+        ramp.color_ramp.elements[1].color = (1.0, 0.25, 0.95, 1.0)
     except Exception:
         pass
 
-    if "Color" in emission.inputs:
-        emission.inputs["Color"].default_value = (0.85, 0.55, 0.95, 1.0)
     if "Strength" in emission.inputs:
-        emission.inputs["Strength"].default_value = 1.0
+        emission.inputs["Strength"].default_value = 1.2
+    if "Color" in emission.inputs:
+        emission.inputs["Color"].default_value = (1.0, 0.25, 0.95, 1.0)
 
     try:
         links.new(diffuse.outputs["BSDF"], shader_to_rgb.inputs["Shader"])
         links.new(shader_to_rgb.outputs["Color"], ramp.inputs["Fac"])
         links.new(ramp.outputs["Color"], emission.inputs["Color"])
-        links.new(ramp.outputs["Alpha"], mix.inputs[0])
-        links.new(diffuse.outputs["BSDF"], mix.inputs[1])
-        links.new(emission.outputs["Emission"], mix.inputs[2])
-        links.new(mix.outputs["Shader"], output.inputs["Surface"])
+        links.new(emission.outputs["Emission"], output.inputs["Surface"])
     except Exception as e:
         print("Toon material link error:", e)
         return False
 
-    return assign_material_to_active_object(mat)
+    return assign_material_to_object(obj, mat)
 
 
 def create_hair_material_basic():
@@ -318,7 +325,8 @@ def create_hair_material_basic():
     if obj is None:
         return False
 
-    mat = get_or_create_material("BlendAgent_Hair")
+    mat = get_unique_material_for_object(obj, "BlendAgent_Hair")
+    set_material_display_color(mat, (0.30, 0.12, 0.04, 1.0))
 
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
@@ -328,63 +336,119 @@ def create_hair_material_basic():
     principled = nodes.new(type="ShaderNodeBsdfPrincipled")
     ramp = nodes.new(type="ShaderNodeValToRGB")
     layer_weight = nodes.new(type="ShaderNodeLayerWeight")
-    noise = nodes.new(type="ShaderNodeTexNoise")
+    wave = nodes.new(type="ShaderNodeTexWave")
     mapping = nodes.new(type="ShaderNodeMapping")
     texcoord = nodes.new(type="ShaderNodeTexCoord")
     mixrgb = nodes.new(type="ShaderNodeMixRGB")
 
-    texcoord.location = (-950, -120)
-    mapping.location = (-760, -120)
-    noise.location = (-560, -120)
-    layer_weight.location = (-560, 120)
-    ramp.location = (-320, 120)
-    mixrgb.location = (-120, 0)
-    principled.location = (120, 0)
-    output.location = (380, 0)
+    texcoord.location = (-980, -120)
+    mapping.location = (-780, -120)
+    wave.location = (-560, -120)
+    layer_weight.location = (-560, 140)
+    ramp.location = (-320, 140)
+    mixrgb.location = (-100, 20)
+    principled.location = (140, 0)
+    output.location = (400, 0)
 
     try:
-        ramp.color_ramp.elements[0].position = 0.15
-        ramp.color_ramp.elements[0].color = (0.05, 0.03, 0.02, 1.0)
-        ramp.color_ramp.elements[1].position = 0.85
-        ramp.color_ramp.elements[1].color = (0.45, 0.22, 0.08, 1.0)
+        ramp.color_ramp.elements[0].position = 0.10
+        ramp.color_ramp.elements[0].color = (0.02, 0.01, 0.005, 1.0)
+        ramp.color_ramp.elements[1].position = 0.92
+        ramp.color_ramp.elements[1].color = (0.52, 0.22, 0.06, 1.0)
     except Exception:
         pass
 
-    if "Scale" in noise.inputs:
-        noise.inputs["Scale"].default_value = 35.0
-    if "Detail" in noise.inputs:
-        noise.inputs["Detail"].default_value = 3.0
-    if "Roughness" in noise.inputs:
-        noise.inputs["Roughness"].default_value = 0.25
+    if "Scale" in wave.inputs:
+        wave.inputs["Scale"].default_value = 35.0
+    if "Distortion" in wave.inputs:
+        wave.inputs["Distortion"].default_value = 3.0
+    if "Detail" in wave.inputs:
+        wave.inputs["Detail"].default_value = 4.0
+    if "Detail Scale" in wave.inputs:
+        wave.inputs["Detail Scale"].default_value = 1.5
 
     if "Blend" in layer_weight.inputs:
-        layer_weight.inputs["Blend"].default_value = 0.25
+        layer_weight.inputs["Blend"].default_value = 0.18
 
     if "Fac" in mixrgb.inputs:
-        mixrgb.inputs["Fac"].default_value = 0.35
+        mixrgb.inputs["Fac"].default_value = 0.45
 
     if "Roughness" in principled.inputs:
-        principled.inputs["Roughness"].default_value = 0.18
+        principled.inputs["Roughness"].default_value = 0.12
     if "Metallic" in principled.inputs:
         principled.inputs["Metallic"].default_value = 0.0
     if "Specular IOR Level" in principled.inputs:
-        principled.inputs["Specular IOR Level"].default_value = 0.85
+        principled.inputs["Specular IOR Level"].default_value = 1.0
     elif "Specular" in principled.inputs:
-        principled.inputs["Specular"].default_value = 0.75
+        principled.inputs["Specular"].default_value = 0.95
 
     try:
         links.new(texcoord.outputs["Object"], mapping.inputs["Vector"])
-        links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
+        links.new(mapping.outputs["Vector"], wave.inputs["Vector"])
         links.new(layer_weight.outputs["Facing"], ramp.inputs["Fac"])
         links.new(ramp.outputs["Color"], mixrgb.inputs[1])
-        links.new(noise.outputs["Color"], mixrgb.inputs[2])
+        links.new(wave.outputs["Color"], mixrgb.inputs[2])
         links.new(mixrgb.outputs["Color"], principled.inputs["Base Color"])
         links.new(principled.outputs["BSDF"], output.inputs["Surface"])
     except Exception as e:
         print("Hair material link error:", e)
         return False
 
-    return assign_material_to_active_object(mat)
+    return assign_material_to_object(obj, mat)
+
+
+def create_eye_material_basic():
+    obj = get_active_object()
+    if obj is None:
+        return False
+
+    mat = get_unique_material_for_object(obj, "BlendAgent_Eye")
+    set_material_display_color(mat, (0.0, 0.65, 1.0, 1.0))
+
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    output = nodes.new(type="ShaderNodeOutputMaterial")
+    principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+    gradient = nodes.new(type="ShaderNodeTexGradient")
+    mapping = nodes.new(type="ShaderNodeMapping")
+    texcoord = nodes.new(type="ShaderNodeTexCoord")
+    ramp = nodes.new(type="ShaderNodeValToRGB")
+
+    texcoord.location = (-980, -120)
+    mapping.location = (-760, -120)
+    gradient.location = (-540, -120)
+    ramp.location = (-300, -120)
+    principled.location = (20, 0)
+    output.location = (280, 0)
+
+    try:
+        ramp.color_ramp.elements[0].position = 0.05
+        ramp.color_ramp.elements[0].color = (0.02, 0.02, 0.02, 1.0)
+        ramp.color_ramp.elements[1].position = 0.80
+        ramp.color_ramp.elements[1].color = (0.0, 0.65, 1.0, 1.0)
+    except Exception:
+        pass
+
+    if "Roughness" in principled.inputs:
+        principled.inputs["Roughness"].default_value = 0.02
+    if "Specular IOR Level" in principled.inputs:
+        principled.inputs["Specular IOR Level"].default_value = 1.0
+    elif "Specular" in principled.inputs:
+        principled.inputs["Specular"].default_value = 1.0
+
+    try:
+        links.new(texcoord.outputs["Object"], mapping.inputs["Vector"])
+        links.new(mapping.outputs["Vector"], gradient.inputs["Vector"])
+        links.new(gradient.outputs["Fac"], ramp.inputs["Fac"])
+        links.new(ramp.outputs["Color"], principled.inputs["Base Color"])
+        links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+    except Exception as e:
+        print("Eye material link error:", e)
+        return False
+
+    return assign_material_to_object(obj, mat)
 
 
 # ------------------------
@@ -405,26 +469,33 @@ class BLENDAGENT_OT_generate(bpy.types.Operator):
 
         executed = False
 
-        if "subdivide" in op:
-            executed = create_subdivide_nodes()
-
-        elif "noise" in op or "terrain" in op:
-            executed = create_noise_terrain_nodes()
-
-        elif "toon" in op:
-            executed = create_toon_material()
+        if "eye" in op:
+            executed = create_eye_material_basic()
 
         elif "hair" in op:
             executed = create_hair_material_basic()
 
-        elif "glossy" in op or "material" in op:
+        elif "toon" in op:
+            executed = create_toon_material()
+
+        elif "glossy" in op:
             executed = create_glossy_material()
 
-        elif "hair" in prompt:
+        elif "noise" in op or "terrain" in op:
+            executed = create_noise_terrain_nodes()
+
+        elif "subdivide" in op:
+            executed = create_subdivide_nodes()
+
+        elif "eye" in prompt or "iris" in prompt or "cornea" in prompt:
+            print("Fallback eye material triggered")
+            executed = create_eye_material_basic()
+
+        elif "hair" in prompt or "bangs" in prompt or "strands" in prompt:
             print("Fallback hair material triggered")
             executed = create_hair_material_basic()
 
-        elif "toon" in prompt or "anime" in prompt or "stylized" in prompt:
+        elif "toon" in prompt or "anime" in prompt or "stylized" in prompt or "cartoon" in prompt:
             print("Fallback toon material triggered")
             executed = create_toon_material()
 
@@ -482,10 +553,11 @@ class BLENDAGENT_PT_panel(bpy.types.Panel):
 
         help_box = layout.box()
         help_box.label(text="Examples")
-        help_box.label(text="• add terrain noise")
         help_box.label(text="• make this glossy")
         help_box.label(text="• make this toon")
         help_box.label(text="• make this hair shiny")
+        help_box.label(text="• make this eye shiny")
+        help_box.label(text="• add terrain noise")
         help_box.label(text="• subdivide mesh")
 
 
@@ -497,7 +569,7 @@ def register_properties():
     bpy.types.Scene.blendagent_prompt = bpy.props.StringProperty(
         name="Prompt",
         description="Describe what to generate",
-        default="make this toon"
+        default="make this hair shiny"
     )
 
 
