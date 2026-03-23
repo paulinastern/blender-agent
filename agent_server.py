@@ -15,38 +15,85 @@ class Prompt(BaseModel):
 
 
 SYSTEM_PROMPT = """
-You are an AI planner for a Blender procedural modeling tool.
+You are an AI planner for a Blender assistant.
 
 Convert the user request into JSON.
 
 Allowed operations:
 - subdivide_mesh
-- scatter_objects
+- noise_terrain
+- glossy_material
+- toon_material
+- hair_material_basic
 
-Return ONLY JSON.
+Rules:
+- Return ONLY JSON.
+- Never explain.
+- Choose only one allowed operation.
 
 Examples:
 
 subdivide mesh
-{"operation":"subdivide_mesh","level":2}
+{"operation":"subdivide_mesh"}
 
-scatter rocks on terrain
-{"operation":"scatter_objects","density":20}
+smooth mesh
+{"operation":"subdivide_mesh"}
+
+add terrain noise
+{"operation":"noise_terrain"}
+
+make this hilly
+{"operation":"noise_terrain"}
+
+make this glossy
+{"operation":"glossy_material"}
+
+add shiny material
+{"operation":"glossy_material"}
+
+make this toon
+{"operation":"toon_material"}
+
+anime shader
+{"operation":"toon_material"}
+
+make this hair shiny
+{"operation":"hair_material_basic"}
+
+hair material
+{"operation":"hair_material_basic"}
 """
 
 
 def extract_json(text):
-
     match = re.search(r"\{.*\}", text, re.DOTALL)
-
     if match:
         return match.group()
-
     return None
 
 
-def call_llm(user_prompt):
+def fallback_plan(user_prompt: str):
+    p = user_prompt.lower()
 
+    if any(word in p for word in ["hair", "hair shader", "hair material", "hair highlight"]):
+        return {"operation": "hair_material_basic", "source": "fallback"}
+
+    if any(word in p for word in ["toon", "anime", "stylized", "cartoon", "cel"]):
+        return {"operation": "toon_material", "source": "fallback"}
+
+    if any(word in p for word in ["glossy", "shiny", "reflective", "polished"]):
+        return {"operation": "glossy_material", "source": "fallback"}
+
+    if any(word in p for word in ["noise", "terrain", "hills", "mountain", "bumpy", "rocky"]):
+        return {"operation": "noise_terrain", "source": "fallback"}
+
+    if any(word in p for word in ["subdivide", "smooth", "smoother"]):
+        return {"operation": "subdivide_mesh", "source": "fallback"}
+
+    return {"operation": "unknown", "source": "fallback"}
+
+
+def call_llm(user_prompt):
     prompt = f"""
 {SYSTEM_PROMPT}
 
@@ -57,7 +104,6 @@ JSON:
 """
 
     try:
-
         response = requests.post(
             OLLAMA_URL,
             json={
@@ -67,34 +113,40 @@ JSON:
             },
             timeout=60
         )
+        response.raise_for_status()
 
         data = response.json()
-
         text = data.get("response", "").strip()
 
         print("LLM response:", text)
 
         json_text = extract_json(text)
-
         if not json_text:
-            return {"operation": "unknown"}
+            return fallback_plan(user_prompt)
 
-        return json.loads(json_text)
+        parsed = json.loads(json_text)
+
+        if "operation" not in parsed:
+            return fallback_plan(user_prompt)
+
+        parsed["source"] = "llm"
+        return parsed
 
     except Exception as e:
-
         print("LLM error:", e)
-
-        return {"operation": "unknown"}
+        return fallback_plan(user_prompt)
 
 
 @app.post("/plan")
 def plan_nodes(data: Prompt):
-
     print("Received prompt:", data.prompt)
-
     plan = call_llm(data.prompt)
-
     print("Plan:", plan)
-
     return plan
+#uvicorn agent_server:app --reload
+#Confirm these prompts route correctly:
+
+#scatter rocks on terrain
+#add terrain noise
+#make this glossy  ; make this toon  ; make this hair shiny
+#subdivide mesh
