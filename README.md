@@ -2,6 +2,8 @@
 
 BlendAgent maps natural language to **trusted, prewritten** Blender tools (materials, geometry nodes, inspect helpers, simple keyframes). In **Assistant** mode, the planner only **chooses** which registered tool to run; it does **not** invent arbitrary `bpy` code paths (Ollama local, OpenRouter cloud planner, or optional FastAPI server).
 
+**Author:** [Paulina Stern](https://github.com/paulinastern) · **License:** [MIT](LICENSE) (permissive open source; keep the copyright notice when redistributing).
+
 ## How people install and use it
 
 | You have… | What to do |
@@ -96,6 +98,10 @@ When **Send scene context** is on, `/plan` receives workspace name, `context_mod
 | `vtuber_readiness_check` | Inspect-only checklist and scene summary for a VTuber-style pipeline |
 
 Eyes still use `eye_material_basic`. This is a **starting point** for a showcase—not a full Live3D/VRM export pipeline.
+
+## License and credits
+
+Copyright (c) 2026 **Paulina Stern**. Released under the [MIT License](LICENSE): you may use, modify, and distribute the project; the license text requires preserving the copyright line so attribution stays clear. This is not legal advice.
 
 ## Design
 

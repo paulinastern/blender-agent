@@ -5,7 +5,7 @@ except ImportError:
 
 bl_info = {
     "name": "BlendAgent",
-    "author": "BlendAgent",
+    "author": "Paulina Stern",
     "version": (0, 3, 10),
     "blender": (4, 0, 0),
     "category": "Object",
