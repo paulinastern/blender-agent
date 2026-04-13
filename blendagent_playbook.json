@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "description": "Human-written workflow hints for the planner (not executable code). Ship beside the add-on or rely on embedded defaults.",
+  "tips": [
+    "One planner call maps to one manifest tool; chain steps with multiple Run invocations or manual tools.",
+    "For VTuber lookdev: blockout meshes → lighting preset → skin/eyes → hair (mesh shader and/or scalp particles) → armature → weights.",
+    "Hair particles need a mesh scalp; use Rendered shading to preview strands.",
+    "Inspect tools (summarize_selection, vtuber_readiness_check) are read-only and good for debugging context."
+  ],
+  "workflows": [
+    {
+      "id": "vtuber_lookdev",
+      "title": "VTuber-style lookdev (typical order)",
+      "steps": [
+        "Add head/body blockout meshes or import your character mesh.",
+        "Run lighting_lookdev_three_point so the viewport read matches materials.",
+        "Apply skin_material_vtuber on skin meshes; eye_material_basic on eyes.",
+        "Use hair_material_basic for mesh hair cards, or hair_particles_vtuber on the scalp mesh.",
+        "Add add_vtuber_armature, then weight paint and shape keys outside BlendAgent."
+      ],
+      "tool_ids": [
+        "mesh_preset_vtuber_head",
+        "mesh_preset_vtuber_body",
+        "lighting_lookdev_three_point",
+        "skin_material_vtuber",
+        "eye_material_basic",
+        "hair_material_basic",
+        "hair_particles_vtuber",
+        "add_vtuber_armature",
+        "vtuber_readiness_check"
+      ]
+    },
+    {
+      "id": "material_pass",
+      "title": "Quick material exploration",
+      "steps": [
+        "Select mesh, run water / glossy / toon / skin as needed.",
+        "Use list_material_nodes inspect if nodes look wrong."
+      ],
+      "tool_ids": [
+        "water_material",
+        "glossy_material",
+        "toon_material",
+        "list_material_nodes"
+      ]
+    }
+  ]
+}

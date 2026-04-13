@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "fallback_order": [
+    "water_material",
+    "eye_material_basic",
+    "hair_material_basic",
+    "hair_particles_vtuber",
+    "toon_material",
+    "glossy_material",
+    "skin_material_vtuber",
+    "mesh_preset_vtuber_head",
+    "mesh_preset_vtuber_body",
+    "lighting_lookdev_three_point",
+    "add_vtuber_armature",
+    "noise_terrain",
+    "subdivide_mesh",
+    "keyframe_loc_rot",
+    "vtuber_readiness_check",
+    "summarize_selection",
+    "list_material_nodes"
+  ],
+  "tools": [
+    {
+      "id": "water_material",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "Water or ocean-like translucent material with bump",
+      "keywords": ["water", "ocean", "liquid", "sea", "lake"],
+      "example_user": "make this water"
+    },
+    {
+      "id": "eye_material_basic",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "Stylized eye material with gradient",
+      "keywords": ["eye", "eyes", "iris", "pupil", "cornea"],
+      "example_user": "make this eye shiny"
+    },
+    {
+      "id": "hair_material_basic",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "Stylized hair for mesh cards: anisotropic sheen, noise roughness, bump, rim + band streaks",
+      "keywords": ["hair", "bangs", "strands", "hair shader", "hair material"],
+      "example_user": "make this hair shiny"
+    },
+    {
+      "id": "hair_particles_vtuber",
+      "kind": "action",
+      "category": "hair",
+      "requires": "active_mesh",
+      "description": "Particle hair on mesh: path strands, Principled strand material (EEVEE-friendly), radius_scale set for visibility",
+      "keywords": ["particle hair", "scalp hair", "hair particles", "strand hair", "add hair particles", "hair system"],
+      "example_user": "add particle hair to this mesh"
+    },
+    {
+      "id": "toon_material",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "Toon / cel-shaded look",
+      "keywords": ["toon", "anime", "stylized", "cartoon", "cel"],
+      "example_user": "make this toon"
+    },
+    {
+      "id": "glossy_material",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "Glossy reflective surface with subtle noise bump",
+      "keywords": ["glossy", "shiny", "reflective", "polished"],
+      "example_user": "make this glossy"
+    },
+    {
+      "id": "skin_material_vtuber",
+      "kind": "action",
+      "category": "material",
+      "requires": "active_object",
+      "description": "VTuber-style skin: subsurface, subtle noise, softer than default grey",
+      "keywords": ["skin", "face skin", "body skin", "vtuber skin", "subsurface skin", "character skin"],
+      "example_user": "apply vtuber skin material"
+    },
+    {
+      "id": "mesh_preset_vtuber_head",
+      "kind": "action",
+      "category": "mesh",
+      "requires": "none",
+      "description": "Add a UV sphere scaled as a stylized head (VTuber blockout)",
+      "keywords": ["head mesh", "vtuber head", "add head", "head preset", "face mesh"],
+      "example_user": "add vtuber head mesh"
+    },
+    {
+      "id": "mesh_preset_vtuber_body",
+      "kind": "action",
+      "category": "mesh",
+      "requires": "none",
+      "description": "Add a subdivided cube scaled as a stylized torso (VTuber blockout)",
+      "keywords": ["body mesh", "vtuber body", "torso mesh", "body preset", "torso preset"],
+      "example_user": "add vtuber body mesh"
+    },
+    {
+      "id": "lighting_lookdev_three_point",
+      "kind": "action",
+      "category": "scene",
+      "requires": "none",
+      "description": "Replace prior BlendAgent lookdev lights; add 3 area lights (key/fill/rim) + subtle dark world",
+      "keywords": ["three point lighting", "studio lights", "lookdev", "lighting preset", "rim light", "key light", "fill light", "character lighting"],
+      "example_user": "add three point lighting for lookdev"
+    },
+    {
+      "id": "add_vtuber_armature",
+      "kind": "action",
+      "category": "rig",
+      "requires": "none",
+      "description": "Add a minimal humanoid armature (hips-spine-head, arms, legs) for VTuber-style posing",
+      "keywords": ["armature", "rig", "bones", "skeleton", "vtuber rig", "humanoid rig", "add rig"],
+      "example_user": "add a vtuber armature"
+    },
+    {
+      "id": "noise_terrain",
+      "kind": "action",
+      "category": "geometry",
+      "requires": "active_mesh",
+      "description": "Displace mesh with procedural noise (geometry nodes)",
+      "keywords": ["noise", "terrain", "hills", "mountain", "bumpy", "rocky"],
+      "example_user": "add terrain noise"
+    },
+    {
+      "id": "subdivide_mesh",
+      "kind": "action",
+      "category": "geometry",
+      "requires": "active_mesh",
+      "description": "Subdivide the active mesh via geometry nodes",
+      "keywords": ["subdivide", "smooth", "smoother"],
+      "example_user": "subdivide mesh"
+    },
+    {
+      "id": "summarize_selection",
+      "kind": "inspect",
+      "category": "scene",
+      "requires": "none",
+      "description": "Summarize active object and basic stats (read-only)",
+      "keywords": ["summarize selection", "summarize", "describe selection", "what is selected", "scene summary"],
+      "example_user": "summarize my selection"
+    },
+    {
+      "id": "list_material_nodes",
+      "kind": "inspect",
+      "category": "scene",
+      "requires": "active_object",
+      "description": "List nodes in the active material node tree (read-only)",
+      "keywords": ["list material nodes", "list shader nodes", "material nodes", "node tree"],
+      "example_user": "list material nodes"
+    },
+    {
+      "id": "vtuber_readiness_check",
+      "kind": "inspect",
+      "category": "scene",
+      "requires": "none",
+      "description": "VTuber pipeline checklist: workspace, mode, mesh, materials, shape keys, armatures (read-only)",
+      "keywords": ["vtuber check", "vtuber readiness", "character check", "live3d", "vrm prep", "pipeline check"],
+      "example_user": "vtuber readiness check"
+    },
+    {
+      "id": "keyframe_loc_rot",
+      "kind": "action",
+      "category": "animation",
+      "requires": "active_object",
+      "description": "Insert location and rotation keyframes at the current frame (object or pose bones)",
+      "keywords": ["keyframe", "keyframes", "key frame", "animate transform", "record keyframe"],
+      "example_user": "keyframe location and rotation"
+    }
+  ]
+}
